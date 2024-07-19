@@ -13,14 +13,24 @@ if __name__ == "__main__":
     # Get "data_source" collection
     data_source_collection =  get_collection("data_source")
 
-    # Subscribe to "data_source" topic
-    consumer = get_consumer()
-    subscribe_topic(consumer, "data_source")
+    # # Subscribe to "data_source" topic
+    # consumer = get_consumer()
+    # consumer = subscribe_topic(consumer, "riot_account_search")
+
+    consumer_conf = {
+        'bootstrap.servers': '3.38.212.52:9092',
+        'group.id': 'my_group',
+        'auto.offset.reset': 'earliest'
+    }
+    consumer = Consumer(**consumer_conf)
+    topic_name = 'riot_account_search'
+    consumer.subscribe([topic_name])
 
     # Consuming loop
     try:
         while True:
             msg = consumer.poll(timeout=1.0)
+            print(msg)
             if msg is None:
                 continue
             if msg.error():
