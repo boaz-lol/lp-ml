@@ -3,6 +3,8 @@ from typing import Dict, Any
 
 from confluent_kafka import Producer, Consumer, KafkaError, KafkaException
 
+from src.db import query_by_puuid
+
 
 KAFKA_BROKER_URL = os.getenv("KAFKA_BROKER_URL")
 
@@ -25,7 +27,7 @@ def get_consumer() -> Consumer:
         print(f"Failed to create Kafka consumer: {e}")
         raise
 
-def subscribe_topic(topic_name: str) -> None:
+def subscribe_topic(consumer: Consumer, topic_name: str) -> None:
     """
     Subscribes the Kafka consumer to the specified topic.
 
@@ -33,8 +35,8 @@ def subscribe_topic(topic_name: str) -> None:
     :raises KafkaException: If there is an error subscribing to the topic
     """
     try:
-        consumer: Consumer = get_consumer()
         consumer.subscribe([topic_name])
     except KafkaException as e:
         print(f"Failed to subscribe to topic {topic_name}: {e}")
         raise
+

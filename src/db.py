@@ -1,5 +1,7 @@
+from http.client import HTTPException
 import os
 
+import pandas as pd
 from pymongo.database import Database
 from pymongo import MongoClient
 from pymongo.collection import Collection
@@ -41,3 +43,11 @@ def get_collection(collection_name: str) -> Collection:
     except ServerSelectionTimeoutError as e:
         print(f"Failed to connect to the database or retrieve collection: {e}")
         raise
+
+def query_by_puuid(puuid: str, data_source_collection: Collection) -> None:
+    query_dict = {"puuid": puuid}
+    data = list(data_source_collection.find(query_dict))
+    df = pd.DataFrame(data)
+    if not data:
+        raise HTTPException(status_code=404, detail="Data not found for the given PUUID")
+    return data
