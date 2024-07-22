@@ -1,7 +1,9 @@
+import json
 import os
 from typing import Dict, Any
 
-from confluent_kafka import Producer, Consumer, KafkaError, KafkaException
+from confluent_kafka import Producer, Consumer, KafkaError, KafkaException, Message
+from pandas import DataFrame
 
 from src.db import query_by_puuid
 
@@ -22,12 +24,14 @@ def get_consumer() -> Consumer:
             'auto.offset.reset': 'earliest'
         }
         consumer: Consumer = Consumer(**consumer_conf)
+        topic_name = 'riot_account_search'
+        consumer.subscribe([topic_name])
         return consumer
     except KafkaException as e:
         print(f"Failed to create Kafka consumer: {e}")
         raise
 
-def subscribe_topic(consumer: Consumer, topic_name: str) -> None:
+def subscribe_topic(consumer: Consumer, topic_name: str) -> Consumer:
     """
     Subscribes the Kafka consumer to the specified topic.
 
@@ -36,7 +40,29 @@ def subscribe_topic(consumer: Consumer, topic_name: str) -> None:
     """
     try:
         consumer.subscribe([topic_name])
+        return consumer
     except KafkaException as e:
         print(f"Failed to subscribe to topic {topic_name}: {e}")
         raise
 
+def parse_json_from_message(message: str) -> json:
+    """
+    Parses the message from the Kafka topic and returns a DataFrame with the specified features.
+
+    :param message: Message from the Kafka topic
+    :return: DataFrame with the specified features
+    """
+    inner_str = message.strip('\\')
+    data = json.loads(json.loads(inner_str))
+    return data
+
+def parse_feature_from_json(json_data: json) -> DataFrame:
+    """
+    Parses the message from the Kafka topic and returns a DataFrame with the specified features.
+
+    :param message: Message from the Kafka topic
+    :return: DataFrame with the specified features
+    """
+    df = DataFrame([json_data])
+    df = df[['champLevel', 'damagesPerMinute', 'damageTakenOnTeamPercentage', 'goldPerMinute', 'teamDamagePercentage', 'kda']]
+    return df

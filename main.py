@@ -1,12 +1,15 @@
+import json
 import sys
 import os
+
+import pandas as pd
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from confluent_kafka import Producer, Consumer, KafkaError, KafkaException
 
 from src.ml import inference_by_puuid
-from src.kafka import get_consumer, subscribe_topic
-from src.db import get_collection, get_db, query_by_puuid
+from src.kafka import  parse_feature_from_json, parse_json_from_message
+from src.db import get_collection, get_db, insert_data_to_ml_inference, query_by_puuid
 
 if __name__ == "__main__":
 
@@ -23,7 +26,7 @@ if __name__ == "__main__":
         'auto.offset.reset': 'earliest'
     }
     consumer = Consumer(**consumer_conf)
-    topic_name = 'riot_account_search'
+    topic_name = 'riot_match_rating'
     consumer.subscribe([topic_name])
 
     # Consuming loop
@@ -39,15 +42,15 @@ if __name__ == "__main__":
                 elif msg.error():
                     raise KafkaException(msg.error())
             else:
-                print('받은 메시지: {0}'.format(msg.value().decode('utf-8')))
-                puuid = msg.value().decode('utf-8')
-                data = query_by_puuid(puuid, data_source_collection)
-                ml_inference_document = {
-                    # key-value 추가
-                    "lp_teer": inference_by_puuid(data)
-                }
-                print(ml_inference_document)
-                break
+                kafka_message_string = msg.value().decode('utf-8')
+                print('Received Kafka Message: {0}'.format(kafka_message_string))
+                json_data = parse_json_from_message(kafka_message_string) 
+                print(json_data)  
+                puuid = json_data["puuid"]
+                df = parse_feature_from_json(json_data)
+                lp_teer = inference_by_puuid(df)
+                print(df.shape,lp_teer)
+                insert_data_to_ml_inference(puuid, lp_teer)
     except KeyboardInterrupt:
         pass
     finally:

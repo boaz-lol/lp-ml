@@ -1,9 +1,10 @@
+from datetime import datetime
 from http.client import HTTPException
 import os
 
 import pandas as pd
 from pymongo.database import Database
-from pymongo import MongoClient
+from pymongo import MongoClient , errors
 from pymongo.collection import Collection
 from pymongo.errors import ServerSelectionTimeoutError, CollectionInvalid
 
@@ -51,3 +52,18 @@ def query_by_puuid(puuid: str, data_source_collection: Collection) -> None:
     if not data:
         raise HTTPException(status_code=404, detail="Data not found for the given PUUID")
     return data
+
+def insert_data_to_ml_inference(puuid: str, lp_teer: float) -> None:
+    ml_inference_collection = get_collection("ml_inference")
+    data = {"puuid": puuid, "lp_teer": lp_teer ,"created_at": datetime.now()}
+    try:
+        result = ml_inference_collection.insert_one(data)
+        print(f"Data inserted with id: {result.inserted_id}")
+    except errors.DuplicateKeyError:
+        print("Duplicate key error: The document with this _id already exists.")
+    except errors.ConnectionFailure:
+        print("Connection failure: Unable to connect to the database.")
+    except errors.OperationFailure as e:
+        print(f"Operation failure: {e}")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
