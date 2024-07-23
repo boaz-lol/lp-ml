@@ -58,7 +58,7 @@ def parse_json_from_message(message: str) -> json:
 
 def parse_feature_from_json(json_data: json) -> DataFrame:
     """
-    Parses the message from the Kafka topic and returns a DataFrame with the specified features.
+    Parses the Kafka topic message json data and returns a DataFrame with the specified features.
 
     :param message: Message from the Kafka topic
     :return: DataFrame with the specified features
@@ -66,3 +66,13 @@ def parse_feature_from_json(json_data: json) -> DataFrame:
     df = DataFrame([json_data])
     df = df[['champLevel', 'damagesPerMinute', 'damageTakenOnTeamPercentage', 'goldPerMinute', 'teamDamagePercentage', 'kda']]
     return df
+
+def parse_match_info_from_json(json_data: json) -> tuple:
+    """
+    Parses the Kafka topic message json data and returns a tuple with the match info data(puuid, matchId, championId).
+
+    :param message: Message from the Kafka topic
+    :return: tuple with puuid string, matchId string, championId string
+    """
+    
+    return json_data["puuid"],json_data["matchId"],json_data["championId"]
