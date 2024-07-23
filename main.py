@@ -32,8 +32,8 @@ if __name__ == "__main__":
     try:
         while True:
             msg = consumer.poll(timeout=1.0)
-            print(msg)
             if msg is None:
+                print('Message is None')
                 continue
             if msg.error():
                 if msg.error().code() == KafkaError._PARTITION_EOF:
