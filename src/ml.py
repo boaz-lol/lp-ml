@@ -12,16 +12,12 @@ loaded_model = mlflow.sklearn.load_model(MLFLOW_MODEL_URI)
 scaler = StandardScaler()
 loaded_scaler = joblib.load("scaler.joblib")
 
-def set_mlforw_tracking_uri():
-    mlflow.set_tracking_uri(uri=MLFOW_TRACKING_URI)
-
-
-def get_model_from_mlflow(model_uri: str = MLFLOW_MODEL_URI):
-    set_mlforw_tracking_uri()
-    loaded_model = mlflow.sklearn.load_model(model_uri)
-    return loaded_model
-
 def inference_by_puuid(data: pd.DataFrame) -> float:
+    """
+    Given a DataFrame with the specified features, returns the predicted LP tier.
+    :param data: DataFrame with the specified features
+    :return: Predicted LP tier
+    """
     X = loaded_scaler.fit_transform(data)
     predictions = loaded_model.predict_proba(data)
     return predictions.tolist()[0][1]
